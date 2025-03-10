@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Webinar Project
 
-## Getting Started
+A modern note-taking application built with Next.js 14.
 
-First, run the development server:
+## Quick Start
+
+1. **Prerequisites**
+   - Node.js version 20
+   - npm
+   - PostgreSQL 14+ (or AWS RDS)
+
+2. **Installation**
+   ```bash
+   # Install dependencies
+   npm ci
+
+   # Create environment file
+   cp .env.example .env
+
+   # Start development server
+   npm run dev
+   ```
+
+   The app will be available at http://localhost:3000
+
+## Available Commands
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run dev    # Start development server
+npm run build  # Build for production
+npm start      # Start production server
+npm run lint   # Run code linting
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Project Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+src/
+├── app/           # Pages and API routes
+├── components/    # React components
+├── context/       # React contexts
+└── lib/          # Utility functions
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment Variables
 
-## Learn More
+Copy `.env.example` to `.env` and adjust the values:
+- `NODE_ENV`: 'development' or 'production' - Determines the application's running environment
 
-To learn more about Next.js, take a look at the following resources:
+### Database Configuration
+Required environment variable for PostgreSQL connection:
+```
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Example for local development:
+```
+DATABASE_URL="postgresql://user:password@localhost:5432/webinar_project"
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Example for AWS RDS:
+```
+DATABASE_URL="postgresql://user:password@your-instance.xxxxx.region.rds.amazonaws.com:5432/webinar_project"
+```
 
-## Deploy on Vercel
+## Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Next.js 14.2.24
+- TypeScript
+- Node.js 20
+- React Markdown for note rendering
+- PostgreSQL (via Prisma ORM)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Database Schema
+
+The application uses PostgreSQL with Prisma ORM. The schema includes:
+
+### Tables
+1. `cloud_notes`
+   - Note storage with title, content, and path
+   - Organized in folders
+   - Timestamps for creation and updates
+
+2. `cloud_folders`
+   - Hierarchical folder structure
+   - Unique paths for navigation
+   - Parent-child relationships
+
+### Setting Up the Database
+
+1. Configure your database connection in `.env`:
+   ```
+   DATABASE_URL="postgresql://user:password@localhost:5432/webinar_project"
+   ```
+
+2. Run the migrations:
+   ```bash
+   # Apply all migrations
+   npx prisma migrate deploy
+   
+   # Generate Prisma Client
+   npx prisma generate
+   ```
+
+## AWS RDS Requirements
+
+### Database Specifications
+- **Engine**: PostgreSQL 14+
+- **Instance**: db.t3.micro (minimum), db.t3.small recommended for production
+- **Storage**: 20 GB gp3 minimum
+- **Multi-AZ**: Recommended for production
+- **Backup**: 7 days retention minimum
+
+### Security
+- VPC with private subnet recommended
+- Security group: Allow port 5432 from application servers only
+- Encryption at rest enabled
+- SSL/TLS required for connections
+
+## Deployment
+
+1. Build the application:
+   ```bash
+   npm run build
+   ```
+
+2. Apply database migrations:
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+3. Start the server:
+   ```bash
+   npm start
+   ```
+
+For production deployment, using a process manager like PM2 is recommended:
+```bash
+npm install -g pm2
+pm2 start npm --name "webinar-project" -- start
+```

@@ -77,13 +77,13 @@ pipeline {
                     ls -lrt
                     
                     # Transfer folder from local to remote EC2 instance using rsync
-                    rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa" ../webinar ec2-user@$EC2_INSTANCE_PRIVATE_IP:/home/ec2-user/
+                    rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa" ../webinar-project ec2-user@$EC2_INSTANCE_PRIVATE_IP:/home/ec2-user/
 
                     ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa ec2-user@$EC2_INSTANCE_PRIVATE_IP <<EOF
 
                     echo "Running commands on EC2 instance..."
                     
-                    cd /home/ec2-user/webinar
+                    cd /home/ec2-user/webinar-project
                     pwd
 
                     # Create environment file

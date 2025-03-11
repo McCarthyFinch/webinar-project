@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from '../login/page.module.css';
 
-export default function SignupPage() {
+// Component that uses searchParams
+function SignupForm() {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -13,6 +14,10 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get the 'from' parameter to redirect after signup and login
+  const from = searchParams.get('from') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,8 +52,23 @@ export default function SignupPage() {
         throw new Error(data.error || 'Signup failed');
       }
 
-      // Redirect to login page on successful signup
-      router.push('/login');
+      // After successful signup, log in automatically
+      const loginResponse = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!loginResponse.ok) {
+        // If auto-login fails, redirect to login page
+        router.push('/login');
+        return;
+      }
+
+      // Redirect to the 'from' path or home page on successful signup and login
+      router.push(from);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -144,5 +164,26 @@ export default function SignupPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+// Fallback component while the SignupForm is loading
+function SignupFormFallback() {
+  return (
+    <div className={styles.container}>
+      <div className={styles.loginCard}>
+        <h1 className={styles.title}>Create an account</h1>
+        <p className={styles.subtitle}>Loading signup form...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<SignupFormFallback />}>
+      <SignupForm />
+    </Suspense>
   );
 } 

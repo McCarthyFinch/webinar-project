@@ -11,6 +11,7 @@ export async function getDirectoryStructure(path: string = ''): Promise<FileSyst
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
     const timestamp = Date.now(); // Add timestamp for cache busting
     const response = await fetch(`${baseUrl}/api/files${path ? `/${path}` : ''}?t=${timestamp}`, {
+      credentials: 'include', // Include cookies in the request
       cache: 'no-store', // Ensure no caching at fetch level
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',

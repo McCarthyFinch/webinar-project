@@ -314,7 +314,11 @@ export default function TopBanner() {
                       <span>Profile</span>
                     </div>
                     {currentUser.isAdmin && (
-                      <Link href="/admin/users" className={styles.userMenuItem}>
+                      <Link 
+                        href="/admin/users" 
+                        className={styles.userMenuItem}
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
                         <Users size={18} weight="regular" />
                         <span>Manage Users</span>
                       </Link>

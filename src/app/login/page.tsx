@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
@@ -16,8 +16,17 @@ function LoginForm() {
   // Get the 'from' parameter to redirect after login
   const from = searchParams.get('from') || '/';
 
+  // Clear any RSC parameters from the URL on mount
+  useEffect(() => {
+    if (window.location.href.includes('_rsc=')) {
+      const cleanUrl = window.location.href.split('?')[0];
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Stop event propagation
     setError(null);
     setIsLoading(true);
 
@@ -28,6 +37,7 @@ function LoginForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        credentials: 'include', // Ensure cookies are sent with the request
       });
 
       const data = await response.json();
@@ -36,8 +46,13 @@ function LoginForm() {
         throw new Error(data.error || 'Login failed');
       }
 
-      // Use window.location.href instead of router.push for more reliable redirects
-      window.location.href = from;
+      console.log('Login successful, redirecting to:', from);
+      
+      // Add a small delay before redirect to ensure cookie is set
+      setTimeout(() => {
+        // Use window.location.href for full page navigation
+        window.location.href = from;
+      }, 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

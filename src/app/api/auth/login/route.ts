@@ -23,15 +23,35 @@ export async function POST(request: NextRequest) {
     
     // Set a session cookie (in a real app, you'd use a proper session management system)
     const cookieStore = cookies();
+    
+    // Get the hostname from the request to determine if we're in production
+    const hostname = request.headers.get('host') || '';
+    const isProduction = 
+      process.env.NODE_ENV === 'production' || 
+      !hostname.includes('localhost');
+
+    // Set cookie with appropriate options for the environment
     cookieStore.set('user_id', String(user.id), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProduction, // Only use secure in production/deployment
+      sameSite: 'lax',  // Increased security but still allows redirects
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: '/',
     });
     
+    // Log cookie for debugging
+    console.log('Set cookie for user:', user.id, 'is production:', isProduction);
+    
     return NextResponse.json(
-      { message: 'Login successful', user },
+      { 
+        message: 'Login successful', 
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          isAdmin: user.isAdmin
+        } 
+      },
       { status: 200 }
     );
   } catch (error) {

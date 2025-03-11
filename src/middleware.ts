@@ -7,20 +7,46 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Define public paths that don't require authentication
-  const isPublicPath = path === '/login' || path === '/signup' || path.startsWith('/api/auth');
+  const isPublicPath = 
+    path === '/login' || 
+    path === '/signup' || 
+    path.startsWith('/api/auth') ||
+    path.startsWith('/_next') ||  // Next.js assets
+    path.includes('favicon.ico');  // Favicon
   
-  // Note: Admin path protection is handled at the API and component level
-  // Admin status check can't be done in middleware because it requires DB access
-
-  // Check if user is authenticated by checking for the user_id cookie
-  const isAuthenticated = request.cookies.has('user_id');
+  // Get authentication cookie
+  const userIdCookie = request.cookies.get('user_id');
+  const isAuthenticated = !!userIdCookie?.value;
   
-  // Log auth status for debugging (only in development)
+  // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[Middleware] Path: ${path}, Public: ${isPublicPath}, Authenticated: ${isAuthenticated}`);
-    if (isAuthenticated) {
-      console.log(`[Middleware] Cookie: ${request.cookies.get('user_id')?.value}`);
+    console.log(`[Middleware] Path: ${path}`);
+    console.log(`[Middleware] Public: ${isPublicPath}`);
+    console.log(`[Middleware] Authenticated: ${isAuthenticated}`);
+    console.log(`[Middleware] Cookie: ${userIdCookie?.value}`);
+  }
+
+  // Handle API routes - skip auth checks for API paths except where needed
+  if (path.startsWith('/api/') && !path.startsWith('/api/auth')) {
+    // For APIs, we'll let the API routes handle their own auth
+    if (!isAuthenticated) {
+      // If API call requires auth but user isn't authenticated, return 401
+      if (path.includes('/api/files') || 
+          path.includes('/api/notes') || 
+          path.includes('/api/search') ||
+          path.includes('/api/admin')) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
     }
+    return NextResponse.next();
+  }
+  
+  // Special case for root path with auth (avoid potential redirect loops)
+  if (path === '/' && isAuthenticated) {
+    return NextResponse.next();
   }
 
   // If the path is not public and the user is not authenticated, redirect to login
@@ -33,19 +59,9 @@ export function middleware(request: NextRequest) {
 
   // If the path is public and the user is authenticated, redirect to home page
   // This prevents authenticated users from accessing login/signup pages
-  if (isPublicPath && isAuthenticated && (path === '/login' || path === '/signup')) {
+  if ((path === '/login' || path === '/signup') && isAuthenticated) {
     return NextResponse.redirect(new URL('/', request.url));
   }
-
-  // For API routes, ensure cookies are properly forwarded
-  if (path.startsWith('/api/') && !path.startsWith('/api/auth')) {
-    const response = NextResponse.next();
-    // Ensure 'user_id' cookie is properly forwarded if needed
-    return response;
-  }
-
-  // For admin paths, we'll check admin status on the server side API
-  // The frontend will handle displaying appropriate errors if not admin
 
   // Otherwise, continue with the request
   return NextResponse.next();

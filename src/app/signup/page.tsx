@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import styles from '../login/page.module.css';
@@ -18,8 +18,17 @@ function SignupForm() {
   // Get the 'from' parameter to redirect after signup and login
   const from = searchParams.get('from') || '/';
 
+  // Clear any RSC parameters from the URL on mount
+  useEffect(() => {
+    if (window.location.href.includes('_rsc=')) {
+      const cleanUrl = window.location.href.split('?')[0];
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Stop event propagation
     setError(null);
     
     // Validate passwords match
@@ -43,6 +52,7 @@ function SignupForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, username, password }),
+        credentials: 'include', // Ensure cookies are sent with the request
       });
 
       const data = await response.json();
@@ -51,6 +61,8 @@ function SignupForm() {
         throw new Error(data.error || 'Signup failed');
       }
 
+      console.log('Signup successful, now logging in');
+
       // After successful signup, log in automatically
       const loginResponse = await fetch('/api/auth/login', {
         method: 'POST',
@@ -58,16 +70,23 @@ function SignupForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        credentials: 'include', // Ensure cookies are sent with the request
       });
 
       if (!loginResponse.ok) {
+        console.log('Auto-login failed, redirecting to login page');
         // If auto-login fails, redirect to login page using window.location
         window.location.href = '/login';
         return;
       }
 
-      // Use window.location.href instead of router.push for more reliable redirects
-      window.location.href = from;
+      console.log('Login successful, redirecting to:', from);
+      
+      // Add a small delay before redirect to ensure cookie is set
+      setTimeout(() => {
+        // Use window.location.href for full page navigation
+        window.location.href = from;
+      }, 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

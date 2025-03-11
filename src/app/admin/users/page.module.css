@@ -1,0 +1,132 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.navButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #f0f4f8;
+  border: none;
+  border-radius: 0.375rem;
+  color: #3b82f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navButton:hover {
+  background-color: #e0e7ff;
+}
+
+.title {
+  font-size: 2rem;
+  color: #1e293b;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.userList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.userCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.userCard:hover {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.userEmail {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.userId {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.userActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.userButton {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.userButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.adminButton {
+  background-color: #e2e8f0;
+  color: #475569;
+}
+
+.adminButton:not(:disabled):hover {
+  background-color: #cbd5e1;
+}
+
+.deleteButton {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.deleteButton:not(:disabled):hover {
+  background-color: #fecaca;
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #64748b;
+  padding: 2rem;
+}
+
+.error {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #ef4444;
+  padding: 1.5rem;
+  background-color: #fee2e2;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+} 

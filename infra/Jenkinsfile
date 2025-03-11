@@ -14,11 +14,20 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                  // Clean before build
+                // Clean before build
                 cleanWs()
                 // We need to explicitly checkout from SCM here
                 checkout scm
                 echo "Building ${env.JOB_NAME}..."
+            }
+        }
+
+        stage('Fetch Secrets from Parameter Store') {
+            steps {
+                script {
+                    def dbPassword = sh(script: 'aws ssm get-parameter --name /smart-notes/db-password --with-decryption --query Parameter.Value --output text', returnStdout: true).trim()
+                    env.DB_PASSWORD = dbPassword
+                }
             }
         }
 
@@ -44,7 +53,6 @@ pipeline {
             }
             steps {
                 script {
-                    
                     def ec2_private_ip = sh(script: 'cd infra && terraform output -raw ec2_private_ip', returnStdout: true).trim()
                     env.EC2_INSTANCE_PRIVATE_IP = ec2_private_ip
                     echo "EC2 Instance Private IP: ${env.EC2_INSTANCE_PRIVATE_IP}"
@@ -78,6 +86,14 @@ pipeline {
                     cd /home/ec2-user/smartnotes
                     pwd
 
+                    # Create environment file
+                    echo "Creating environment file..."
+                    cp .env.example .env
+                    echo "DB_PASSWORD=${DB_PASSWORD}" >> .env
+
+                    echo "Showing the .env file..."
+                    cat .env
+                    
                     # Directly target the Next.js server process and kill it
                     if pgrep -f "next-server" > /dev/null; then
                         echo "Found Next.js server process, attempting to kill it..."

@@ -314,10 +314,10 @@ export default function TopBanner() {
                       <span>Profile</span>
                     </div>
                     {currentUser.isAdmin && (
-                      <div className={styles.userMenuItem}>
+                      <Link href="/admin/users" className={styles.userMenuItem}>
                         <Users size={18} weight="regular" />
                         <span>Manage Users</span>
-                      </div>
+                      </Link>
                     )}
                     <div className={styles.userMenuItem} onClick={handleLogout}>
                       <SignOut size={18} weight="regular" />

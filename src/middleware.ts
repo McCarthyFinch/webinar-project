@@ -8,6 +8,9 @@ export function middleware(request: NextRequest) {
 
   // Define public paths that don't require authentication
   const isPublicPath = path === '/login' || path === '/signup' || path.startsWith('/api/auth');
+  
+  // Note: Admin path protection is handled at the API and component level
+  // Admin status check can't be done in middleware because it requires DB access
 
   // Check if user is authenticated by checking for the user_id cookie
   const isAuthenticated = request.cookies.has('user_id');
@@ -25,6 +28,9 @@ export function middleware(request: NextRequest) {
   if (isPublicPath && isAuthenticated && (path === '/login' || path === '/signup')) {
     return NextResponse.redirect(new URL('/', request.url));
   }
+
+  // For admin paths, we'll check admin status on the server side API
+  // The frontend will handle displaying appropriate errors if not admin
 
   // Otherwise, continue with the request
   return NextResponse.next();

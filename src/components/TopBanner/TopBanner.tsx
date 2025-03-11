@@ -5,7 +5,8 @@ import {
   X,
   Note,
   SignOut,
-  UserCircle
+  UserCircle,
+  Users
 } from '@phosphor-icons/react';
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useSelectedNote } from '@/context/SelectedNoteContext';
@@ -312,6 +313,12 @@ export default function TopBanner() {
                       <UserCircle size={18} weight="regular" />
                       <span>Profile</span>
                     </div>
+                    {currentUser.isAdmin && (
+                      <div className={styles.userMenuItem}>
+                        <Users size={18} weight="regular" />
+                        <span>Manage Users</span>
+                      </div>
+                    )}
                     <div className={styles.userMenuItem} onClick={handleLogout}>
                       <SignOut size={18} weight="regular" />
                       <span>Logout</span>

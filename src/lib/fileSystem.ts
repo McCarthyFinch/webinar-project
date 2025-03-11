@@ -21,6 +21,19 @@ export async function getDirectoryStructure(path: string = ''): Promise<FileSyst
     });
     
     if (!response.ok) {
+      // Handle authentication errors properly
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          // Save current path for redirect after login
+          const currentPath = window.location.pathname;
+          const redirectUrl = `/login?from=${encodeURIComponent(currentPath)}`;
+          // Only redirect if not already on login page to avoid infinite loop
+          if (!window.location.pathname.startsWith('/login')) {
+            window.location.href = redirectUrl;
+          }
+        }
+        return [];
+      }
       throw new Error('Failed to fetch directory structure');
     }
     

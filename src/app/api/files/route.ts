@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -99,6 +100,17 @@ function formatName(name: string): string {
 
 export async function GET() {
   try {
+    // Check if user is authenticated
+    const userId = cookies().get('user_id')?.value;
+    
+    if (!userId) {
+      // Return a proper JSON error instead of redirecting to HTML
+      return NextResponse.json(
+        { error: 'Authentication required' }, 
+        { status: 401 }
+      );
+    }
+    
     const notesDir = path.join(process.cwd(), 'public', 'notes');
     const structure = await readDirectory(notesDir);
     

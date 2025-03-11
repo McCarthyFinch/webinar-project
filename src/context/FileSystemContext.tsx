@@ -2,6 +2,7 @@
 
 import { createContext, useContext, ReactNode, useState, useCallback, useEffect, useRef } from 'react';
 import { getDirectoryStructure } from '@/lib/fileSystem';
+import { usePathname } from 'next/navigation';
 
 type FileSystemItem = {
   name: string;
@@ -30,8 +31,17 @@ export function FileSystemProvider({ children }: FileSystemProviderProps) {
   const CACHE_DURATION = 1000; // 1 second cache
   const retryCountRef = useRef(0);
   const MAX_RETRIES = 3;
+  const pathname = usePathname();
+  
+  // Don't attempt to load file structure on login or signup pages
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
 
   const refreshStructure = useCallback(async (force = false) => {
+    // Skip refreshing on auth pages
+    if (isAuthPage) {
+      return;
+    }
+    
     // If already refreshing, don't start another refresh
     if (isRefreshingRef.current && !force) {
       return;
@@ -60,8 +70,11 @@ export function FileSystemProvider({ children }: FileSystemProviderProps) {
         setTimeout(() => refreshStructure(true), 800); // Retry after 800ms
       }
     } catch (err) {
-      setError('Failed to load notes structure');
-      console.error('Error loading structure:', err);
+      // Don't show error on auth pages
+      if (!isAuthPage) {
+        setError('Failed to load notes structure');
+        console.error('Error loading structure:', err);
+      }
       
       // Retry after a delay if we haven't reached max retries
       if (retryCountRef.current < MAX_RETRIES) {
@@ -73,16 +86,21 @@ export function FileSystemProvider({ children }: FileSystemProviderProps) {
         isRefreshingRef.current = false;
       }
     }
-  }, []);
+  }, [isAuthPage]);
 
   // Initial load with a slight delay to ensure session is established
   useEffect(() => {
+    // Skip initial load on auth pages
+    if (isAuthPage) {
+      return;
+    }
+    
     const timer = setTimeout(() => {
       refreshStructure();
     }, 300); // 300ms delay on initial load
     
     return () => clearTimeout(timer);
-  }, [refreshStructure]);
+  }, [refreshStructure, isAuthPage]);
 
   return (
     <FileSystemContext.Provider

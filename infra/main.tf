@@ -3,8 +3,8 @@ provider "aws" {
 }
 
 # Create a Security Group
-resource "aws_security_group" "smart_notes_sg" {
-  name        = "smart_notes_sg"
+resource "aws_security_group" "webinar_sg" {
+  name        = "webinar_sg"
   description = "Allow SSH and HTTP traffic"
   vpc_id      = "vpc-02c4d5d5080574780"
 
@@ -37,15 +37,15 @@ resource "aws_security_group" "smart_notes_sg" {
 }
 
 # Create an EC2 instance
-resource "aws_instance" "smart_notes_ec2" {
+resource "aws_instance" "webinar_ec2" {
   ami                    = "ami-0c614dee691cbbf37" # Amazon Linux 2023 AMI
   instance_type          = "t3.large"
   key_name               = "poc-jenkins" # Change to your SSH key
-  vpc_security_group_ids = [aws_security_group.smart_notes_sg.id]
+  vpc_security_group_ids = [aws_security_group.webinar_sg.id]
   subnet_id = "subnet-0d728b2163ac46bec" # Change to your subnet
   user_data              = file("ec2-user-data.sh")
   iam_instance_profile   = "poc-jenkins-terraform-ssm-profile1"
   tags = {
-    Name = "SmartNotes-EC2"
+    Name = "webinar-EC2"
   }
 }

@@ -39,7 +39,7 @@ pipeline {
                 ansiColor('xterm') {
                     sh '''
                     cd infra
-                    terraform init -backend-config ./backend_configuration/smart-notes.hcl
+                    terraform init -backend-config ./backend_configuration/webinar.hcl
                     terraform apply -auto-approve -lock=false
                     '''
                 }
@@ -77,13 +77,13 @@ pipeline {
                     ls -lrt
                     
                     # Transfer folder from local to remote EC2 instance using rsync
-                    rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa" ../smartnotes ec2-user@$EC2_INSTANCE_PRIVATE_IP:/home/ec2-user/
+                    rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa" ../webinar ec2-user@$EC2_INSTANCE_PRIVATE_IP:/home/ec2-user/
 
                     ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa ec2-user@$EC2_INSTANCE_PRIVATE_IP <<EOF
 
                     echo "Running commands on EC2 instance..."
                     
-                    cd /home/ec2-user/smartnotes
+                    cd /home/ec2-user/webinar
                     pwd
 
                     # Create environment file
@@ -134,7 +134,7 @@ pipeline {
                     echo "Starting the application..."
                     nohup npm start > app.log 2>&1 &
 
-                    echo "Smart Notes app is running on port 3000"
+                    echo "webinar Notes app is running on port 3000"
 
                     >>EOF
                     '''
@@ -150,7 +150,7 @@ pipeline {
                 ansiColor('xterm') {
                     sh '''
                     cd infra
-                    terraform init -backend-config ./backend_configuration/smart-notes.hcl
+                    terraform init -backend-config ./backend_configuration/webinar.hcl
                     terraform destroy -auto-approve
                     '''
                 }

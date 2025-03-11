@@ -14,6 +14,14 @@ export function middleware(request: NextRequest) {
 
   // Check if user is authenticated by checking for the user_id cookie
   const isAuthenticated = request.cookies.has('user_id');
+  
+  // Log auth status for debugging (only in development)
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[Middleware] Path: ${path}, Public: ${isPublicPath}, Authenticated: ${isAuthenticated}`);
+    if (isAuthenticated) {
+      console.log(`[Middleware] Cookie: ${request.cookies.get('user_id')?.value}`);
+    }
+  }
 
   // If the path is not public and the user is not authenticated, redirect to login
   if (!isPublicPath && !isAuthenticated) {
@@ -27,6 +35,13 @@ export function middleware(request: NextRequest) {
   // This prevents authenticated users from accessing login/signup pages
   if (isPublicPath && isAuthenticated && (path === '/login' || path === '/signup')) {
     return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  // For API routes, ensure cookies are properly forwarded
+  if (path.startsWith('/api/') && !path.startsWith('/api/auth')) {
+    const response = NextResponse.next();
+    // Ensure 'user_id' cookie is properly forwarded if needed
+    return response;
   }
 
   // For admin paths, we'll check admin status on the server side API

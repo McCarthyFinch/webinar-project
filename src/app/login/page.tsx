@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
 // Component that uses searchParams
@@ -11,7 +11,6 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
   
   // Get the 'from' parameter to redirect after login
@@ -37,8 +36,8 @@ function LoginForm() {
         throw new Error(data.error || 'Login failed');
       }
 
-      // Redirect to the 'from' path or home page on successful login
-      router.push(from);
+      // Use window.location.href instead of router.push for more reliable redirects
+      window.location.href = from;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

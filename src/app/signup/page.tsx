@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import styles from '../login/page.module.css';
 
 // Component that uses searchParams
@@ -13,7 +13,6 @@ function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
   
   // Get the 'from' parameter to redirect after signup and login
@@ -62,13 +61,13 @@ function SignupForm() {
       });
 
       if (!loginResponse.ok) {
-        // If auto-login fails, redirect to login page
-        router.push('/login');
+        // If auto-login fails, redirect to login page using window.location
+        window.location.href = '/login';
         return;
       }
 
-      // Redirect to the 'from' path or home page on successful signup and login
-      router.push(from);
+      // Use window.location.href instead of router.push for more reliable redirects
+      window.location.href = from;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

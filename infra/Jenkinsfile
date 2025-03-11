@@ -92,7 +92,6 @@ pipeline {
                     echo "DB_PASSWORD=${DB_PASSWORD}" >> .env
 
                     echo "Showing the .env file..."
-                    cat .env
                     
                     # Directly target the Next.js server process and kill it
                     if pgrep -f "next-server" > /dev/null; then

@@ -11,15 +11,10 @@ import {
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useSelectedNote } from '@/context/SelectedNoteContext';
 import { useFileSystem } from '@/context/FileSystemContext';
+import { useAuth } from '@/context/AuthContext';
 import styles from './TopBanner.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-type SearchResult = {
-  path: string;
-  title: string;
-  preview: string;
-};
 
 type FileSystemItem = {
   name: string;
@@ -28,13 +23,10 @@ type FileSystemItem = {
   children?: FileSystemItem[];
 };
 
-type UserInfo = {
-  id: number;
-  email: string;
-  username: string;
-  isAdmin: boolean;
-  createdAt: string;
-  updatedAt: string;
+type SearchResult = {
+  path: string;
+  title: string;
+  preview: string;
 };
 
 const findMaxNumberInDir = (items: FileSystemItem[], regex: RegExp): number => {
@@ -64,12 +56,12 @@ export default function TopBanner() {
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { setSelectedNote } = useSelectedNote();
   const { refreshStructure } = useFileSystem();
   const router = useRouter();
+  const { user, refreshAuth } = useAuth();
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -118,26 +110,6 @@ export default function TopBanner() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
-
-  useEffect(() => {
-    async function checkAuthStatus() {
-      try {
-        const response = await fetch('/api/auth/session');
-        const data = await response.json();
-        
-        if (data.authenticated && data.user) {
-          setCurrentUser(data.user);
-        } else {
-          setCurrentUser(null);
-        }
-      } catch (error) {
-        console.error('Error checking auth status:', error);
-        setCurrentUser(null);
-      }
-    }
-
-    checkAuthStatus();
   }, []);
 
   const handleResultClick = (path: string) => {
@@ -215,6 +187,9 @@ export default function TopBanner() {
         throw new Error('Logout failed');
       }
 
+      // Refresh auth state
+      refreshAuth();
+
       // Close the user menu and redirect to login page
       setIsUserMenuOpen(false);
       router.push('/login');
@@ -289,23 +264,23 @@ export default function TopBanner() {
           <div className={styles.userMenuContainer} ref={userMenuRef}>
             <button 
               className={`${styles.iconButton} ${isUserMenuOpen ? styles.active : ''}`} 
-              title={currentUser ? currentUser.username : 'Profile'}
+              title={user ? user.username : 'Profile'}
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             >
               <User size={20} />
             </button>
             {isUserMenuOpen && (
               <div className={styles.userMenu}>
-                {currentUser ? (
+                {user ? (
                   <>
                     <div className={styles.userMenuHeader}>
                       <div className={styles.userAvatar}>
-                        {getUserInitials(currentUser.username)}
+                        {getUserInitials(user.username)}
                       </div>
                       <div className={styles.userInfo}>
-                        <div className={styles.userName}>{currentUser.username}</div>
+                        <div className={styles.userName}>{user.username}</div>
                         <div className={styles.userEmail}>
-                          {currentUser.email}
+                          {user.email}
                         </div>
                       </div>
                     </div>
@@ -313,7 +288,7 @@ export default function TopBanner() {
                       <UserCircle size={18} weight="regular" />
                       <span>Profile</span>
                     </div>
-                    {currentUser.isAdmin && (
+                    {user.isAdmin && (
                       <Link 
                         href="/admin/users" 
                         className={styles.userMenuItem}

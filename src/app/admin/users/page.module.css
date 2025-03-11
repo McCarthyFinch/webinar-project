@@ -82,6 +82,9 @@
 }
 
 .userButton {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   font-size: 0.9rem;
@@ -101,8 +104,17 @@
   color: #475569;
 }
 
-.adminButton:not(:disabled):hover {
+.adminButton:hover {
   background-color: #cbd5e1;
+}
+
+.makeAdminButton {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.makeAdminButton:hover {
+  background-color: #bfdbfe;
 }
 
 .deleteButton {
@@ -110,7 +122,7 @@
   color: #ef4444;
 }
 
-.deleteButton:not(:disabled):hover {
+.deleteButton:hover {
   background-color: #fecaca;
 }
 
@@ -129,4 +141,119 @@
   background-color: #fee2e2;
   border-radius: 8px;
   border: 1px solid #fecaca;
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: white;
+  border-radius: 8px;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1e293b;
+}
+
+.warningIcon {
+  color: #f59e0b;
+}
+
+.modalBody {
+  padding: 1.5rem;
+  color: #475569;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.modalBody strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cancelButton, .confirmButton {
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.cancelButton {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: #e2e8f0;
+}
+
+.confirmButton {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.confirmButton:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.deleteConfirm {
+  background-color: #ef4444;
+}
+
+.deleteConfirm:hover:not(:disabled) {
+  background-color: #dc2626;
+}
+
+.cancelButton:disabled, .confirmButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
 } 

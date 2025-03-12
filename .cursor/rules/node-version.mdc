@@ -1,0 +1,10 @@
+---
+description: Uppon running a terminal and about to run a node or npm command
+globs: 
+---
+# node, npm
+When the user starts a new terminal session and the command is about to use node or npm
+
+- Check for the existence of a `.nvmrc` file.
+- If the `.nvmrc` file doesn't exist, create one with the desired Node.js version.  Once created proceed with the next step.
+- If the `.nvmrc` file does exist always use the `nvm use (correct version specified in the .nvmrc file) && ` in front of the command, to switch to the node version specified in the `.nvmrc` file.  Eg: ```nvm use (correct version specified in the .nvmrc file) && npm install```

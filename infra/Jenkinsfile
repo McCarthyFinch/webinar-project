@@ -1,0 +1,159 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to build')
+        booleanParam(name: 'DESTROY_RESOURCES', defaultValue: false, description: 'Destroy resources after execution')
+    }
+
+    environment {
+        AWS_REGION = 'us-east-1'
+        SSH_KEY = 'poc-jenkins.pem'  // Update with your actual SSH key path
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                // Clean before build
+                cleanWs()
+                // We need to explicitly checkout from SCM here
+                checkout scm
+                echo "Building ${env.JOB_NAME}..."
+            }
+        }
+
+        stage('Fetch Secrets from Parameter Store') {
+            steps {
+                script {
+                    def dbPassword = sh(script: 'aws ssm get-parameter --name /smart-notes/db-password --with-decryption --query Parameter.Value --output text', returnStdout: true).trim()
+                    env.DB_PASSWORD = dbPassword
+                }
+            }
+        }
+
+        stage('Terraform Init & Apply') {
+            when {
+                expression { return !params.DESTROY_RESOURCES }
+            }
+            steps {
+                ansiColor('xterm') {
+                    sh '''
+                    cd infra
+                    terraform init -backend-config ./backend_configuration/webinar.hcl
+                    terraform apply -auto-approve -lock=false
+                    '''
+                }
+                sleep(time: 1, unit: 'MINUTES')
+            }
+        }
+
+        stage('Fetch EC2 Private IP') {
+            when {
+                expression { return !params.DESTROY_RESOURCES }
+            }
+            steps {
+                script {
+                    def ec2_private_ip = sh(script: 'cd infra && terraform output -raw ec2_private_ip', returnStdout: true).trim()
+                    env.EC2_INSTANCE_PRIVATE_IP = ec2_private_ip
+                    echo "EC2 Instance Private IP: ${env.EC2_INSTANCE_PRIVATE_IP}"
+                }
+            }
+        }
+
+        stage('Deploy to EC2') {
+            when {
+                expression { return !params.DESTROY_RESOURCES }
+            }
+            steps {
+                ansiColor('xterm') {
+                    sh '''
+                    # Fetch the private key from AWS Parameter Store
+                    PRIVATE_KEY=$(aws ssm get-parameter --name jenkins-poc-key --with-decryption --query Parameter.Value --output text)
+
+                    # Save the key to a temporary file
+                    echo "$PRIVATE_KEY" > /tmp/id_rsa
+                    chmod 600 /tmp/id_rsa
+                    pwd
+                    ls -lrt
+                    
+                    # Transfer folder from local to remote EC2 instance using rsync
+                    rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa" ../webinar-project ec2-user@$EC2_INSTANCE_PRIVATE_IP:/home/ec2-user/
+
+                    ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa ec2-user@$EC2_INSTANCE_PRIVATE_IP <<EOF
+
+                    echo "Running commands on EC2 instance..."
+                    
+                    cd /home/ec2-user/webinar-project
+                    pwd
+
+                    # Create environment file
+                    echo "Creating environment file..."
+                    cp .env.example .env
+                    echo "DB_PASSWORD=${DB_PASSWORD}" >> .env
+
+                    echo "Showing the .env file..."
+                    
+                    # Directly target the Next.js server process and kill it
+                    if pgrep -f "next-server" > /dev/null; then
+                        echo "Found Next.js server process, attempting to kill it..."
+                        pkill -f "next-server" || echo "Failed to kill Next.js server process"
+                        sleep 2
+                    fi
+                
+                    # Clean up previous build artifacts
+                    echo "Cleaning up previous build artifacts..."
+                    rm -rf .next
+                    rm -rf node_modules
+                    
+                    # Clean npm cache
+                    echo "Cleaning npm cache..."
+                    npm cache clean --force
+                    
+                    # Install dependencies using npm ci for deterministic builds
+                    echo "Installing dependencies using npm ci..."
+                    npm ci
+                    
+                    # Check and run database migrations if needed
+                    echo "Checking database migration status..."
+                    npx prisma generate
+                    
+                    # Check if there are pending migrations without capturing the full output
+                    if npx prisma migrate status | grep -q "No pending migrations"; then
+                        echo "Database is up to date, no migrations needed."
+                    else
+                        echo "Running pending database migrations..."
+                        npx prisma migrate deploy
+                    fi
+
+                    # Build the application
+                    echo "Building the application..."
+                    npm run build
+
+                    # Start the application (runs on port 3000)
+                    echo "Starting the application..."
+                    nohup npm start > app.log 2>&1 &
+
+                    echo "webinar Notes app is running on port 3000"
+
+                    >>EOF
+                    '''
+                }
+            }
+        }
+
+        stage('Destroy Resources') {
+            when {
+                expression { return params.DESTROY_RESOURCES }
+            }
+            steps {
+                ansiColor('xterm') {
+                    sh '''
+                    cd infra
+                    terraform init -backend-config ./backend_configuration/webinar.hcl
+                    terraform destroy -auto-approve
+                    '''
+                }
+            }
+        }
+    }
+}

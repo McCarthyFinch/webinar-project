@@ -8,6 +8,8 @@ import TopBanner from "@/components/TopBanner/TopBanner";
 import { SelectedNoteProvider } from '@/context/SelectedNoteContext';
 import { FileSystemProvider } from '@/context/FileSystemContext';
 import { ModalProvider } from '@/context/ModalContext';
+import { AuthProvider } from '@/context/AuthContext';
+import { usePathname } from 'next/navigation';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,6 +20,9 @@ export default function RootLayout({
 }>) {
   const [selectedNote, setSelectedNote] = useState<string | null>(null);
   const [selectedNoteType, setSelectedNoteType] = useState<'local' | null>(null);
+  const pathname = usePathname();
+  
+  const isLoginPage = pathname === '/login';
 
   const handleNoteSelect = (path: string | null, type: 'local' | null) => {
     setSelectedNote(path);
@@ -29,47 +34,53 @@ export default function RootLayout({
       <body className={inter.className}>
         <ModalProvider>
           <FileSystemProvider>
-            <SelectedNoteProvider 
-              initialValue={selectedNote}
-              initialNoteType={selectedNoteType}
-              onSelect={handleNoteSelect}
-            >
-              <div style={{ 
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100vh',
-                overflow: 'hidden',
-                backgroundColor: '#f0f9ff'
-              }}>
-                <TopBanner />
-                <div style={{ 
-                  display: 'flex', 
-                  flex: 1,
-                  overflow: 'hidden',
-                  gap: 0,
-                  position: 'relative'
-                }}>
-                  <Sidebar 
-                    onSelectNote={handleNoteSelect} 
-                    selectedPath={selectedNote} 
-                  />
-                  <main style={{ 
-                    flex: 1,
-                    overflow: 'hidden',
+            <AuthProvider>
+              <SelectedNoteProvider 
+                initialValue={selectedNote}
+                initialNoteType={selectedNoteType}
+                onSelect={handleNoteSelect}
+              >
+                {isLoginPage ? (
+                  children
+                ) : (
+                  <div style={{ 
                     display: 'flex',
                     flexDirection: 'column',
-                    margin: 0,
-                    padding: '0.25rem',
-                    borderRadius: 0,
-                    background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-                    boxShadow: 'none',
-                    minWidth: 0
+                    height: '100vh',
+                    overflow: 'hidden',
+                    backgroundColor: '#f0f9ff'
                   }}>
-                    {children}
-                  </main>
-                </div>
-              </div>
-            </SelectedNoteProvider>
+                    <TopBanner />
+                    <div style={{ 
+                      display: 'flex', 
+                      flex: 1,
+                      overflow: 'hidden',
+                      gap: 0,
+                      position: 'relative'
+                    }}>
+                      <Sidebar 
+                        onSelectNote={handleNoteSelect} 
+                        selectedPath={selectedNote} 
+                      />
+                      <main style={{ 
+                        flex: 1,
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        margin: 0,
+                        padding: '0.25rem',
+                        borderRadius: 0,
+                        background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                        boxShadow: 'none',
+                        minWidth: 0
+                      }}>
+                        {children}
+                      </main>
+                    </div>
+                  </div>
+                )}
+              </SelectedNoteProvider>
+            </AuthProvider>
           </FileSystemProvider>
         </ModalProvider>
       </body>

@@ -3,25 +3,30 @@ import {
   Gear, 
   User,
   X,
-  Note
+  Note,
+  SignOut,
+  UserCircle,
+  Users
 } from '@phosphor-icons/react';
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useSelectedNote } from '@/context/SelectedNoteContext';
 import { useFileSystem } from '@/context/FileSystemContext';
+import { useAuth } from '@/context/AuthContext';
 import styles from './TopBanner.module.css';
 import Link from 'next/link';
-
-type SearchResult = {
-  path: string;
-  title: string;
-  preview: string;
-};
+import { useRouter } from 'next/navigation';
 
 type FileSystemItem = {
   name: string;
   path: string;
   isFolder: boolean;
   children?: FileSystemItem[];
+};
+
+type SearchResult = {
+  path: string;
+  title: string;
+  preview: string;
 };
 
 const findMaxNumberInDir = (items: FileSystemItem[], regex: RegExp): number => {
@@ -50,9 +55,13 @@ export default function TopBanner() {
   const [newNoteCategory, setNewNoteCategory] = useState('programming-basics');
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { setSelectedNote } = useSelectedNote();
   const { refreshStructure } = useFileSystem();
+  const router = useRouter();
+  const { user, refreshAuth } = useAuth();
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -88,6 +97,20 @@ export default function TopBanner() {
       }
     };
   }, [searchQuery]);
+
+  useEffect(() => {
+    // Close user menu when clicking outside
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleResultClick = (path: string) => {
     setSelectedNote(path, 'local');
@@ -154,6 +177,39 @@ export default function TopBanner() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
+
+      // Refresh auth state
+      refreshAuth();
+
+      // Close the user menu and redirect to login page
+      setIsUserMenuOpen(false);
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  // Helper function to get user's initials
+  const getUserInitials = (username: string): string => {
+    if (!username) return '';
+    // Get first letter of each word in the username (for names like "John Doe")
+    return username
+      .split(' ')
+      .map(part => part.charAt(0))
+      .join('')
+      .toUpperCase()
+      .substring(0, 2); // Limit to 2 characters
+  };
+
   return (
     <>
       <div className={styles.banner}>
@@ -205,9 +261,59 @@ export default function TopBanner() {
           <button className={styles.iconButton} title="Settings">
             <Gear size={20} />
           </button>
-          <button className={styles.iconButton} title="Profile">
-            <User size={20} />
-          </button>
+          <div className={styles.userMenuContainer} ref={userMenuRef}>
+            <button 
+              className={`${styles.iconButton} ${isUserMenuOpen ? styles.active : ''}`} 
+              title={user ? user.username : 'Profile'}
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            >
+              <User size={20} />
+            </button>
+            {isUserMenuOpen && (
+              <div className={styles.userMenu}>
+                {user ? (
+                  <>
+                    <div className={styles.userMenuHeader}>
+                      <div className={styles.userAvatar}>
+                        {getUserInitials(user.username)}
+                      </div>
+                      <div className={styles.userInfo}>
+                        <div className={styles.userName}>{user.username}</div>
+                        <div className={styles.userEmail}>
+                          {user.email}
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles.userMenuItem}>
+                      <UserCircle size={18} weight="regular" />
+                      <span>Profile</span>
+                    </div>
+                    {user.isAdmin && (
+                      <Link 
+                        href="/admin/users" 
+                        className={styles.userMenuItem}
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Users size={18} weight="regular" />
+                        <span>Manage Users</span>
+                      </Link>
+                    )}
+                    <div className={styles.userMenuItem} onClick={handleLogout}>
+                      <SignOut size={18} weight="regular" />
+                      <span>Logout</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" className={styles.userMenuItem}>
+                      <SignOut size={18} weight="regular" />
+                      <span>Sign in</span>
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

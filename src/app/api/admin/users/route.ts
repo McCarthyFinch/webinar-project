@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { cookies } from 'next/headers';
 
+// Mark route as dynamic to avoid static generation warnings
+export const dynamic = 'force-dynamic';
+
 // Using Prisma client with a type workaround
 // This is necessary because TypeScript can't infer the models from the Prisma schema
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

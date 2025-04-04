@@ -3,7 +3,9 @@ import {
   Gear, 
   User,
   X,
-  Note
+  Note,
+  SignOut,
+  UsersThree
 } from '@phosphor-icons/react';
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useSelectedNote } from '@/context/SelectedNoteContext';
@@ -50,9 +52,25 @@ export default function TopBanner() {
   const [newNoteCategory, setNewNoteCategory] = useState('programming-basics');
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { setSelectedNote } = useSelectedNote();
   const { refreshStructure } = useFileSystem();
+
+  // Add click outside listener to close the user menu
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -205,9 +223,42 @@ export default function TopBanner() {
           <button className={styles.iconButton} title="Settings">
             <Gear size={20} />
           </button>
-          <button className={styles.iconButton} title="Profile">
-            <User size={20} />
-          </button>
+          <div className={styles.userMenuContainer} ref={userMenuRef}>
+            <button 
+              className={styles.iconButton} 
+              title="Profile" 
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            >
+              <User size={20} />
+            </button>
+            
+            {isUserMenuOpen && (
+              <div className={styles.userDropdown}>
+                <div className={styles.userInfo}>
+                  <div className={styles.userAvatar}>
+                    <span>B</span>
+                  </div>
+                  <div className={styles.userDetails}>
+                    <div className={styles.userName}>bogdan</div>
+                    <div className={styles.userEmail}>bogdan.stankovic@onit.com</div>
+                  </div>
+                </div>
+                <div className={styles.dropdownDivider}></div>
+                <button className={styles.dropdownItem}>
+                  <User size={16} />
+                  <span>Profile</span>
+                </button>
+                <button className={styles.dropdownItem}>
+                  <UsersThree size={16} />
+                  <span>Manage Users</span>
+                </button>
+                <button className={styles.dropdownItem}>
+                  <SignOut size={16} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

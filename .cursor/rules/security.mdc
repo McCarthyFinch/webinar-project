@@ -1,0 +1,49 @@
+---
+description: define a security rule to be used when checking our standards
+globs: 
+alwaysApply: false
+---
+# Security Rules for Next.js and React Projects
+
+## **1. Cross-Site Scripting (XSS)**
+- Sanitize and encode all user inputs before rendering.
+- Avoid using `dangerouslySetInnerHTML`; if necessary, sanitize content properly.
+- Implement a Content Security Policy (CSP) to mitigate injection attacks.
+
+## **2. Server-Side Rendering (SSR) Vulnerabilities**
+- Validate and sanitize all incoming requests in API routes.
+- Ensure no sensitive data is leaked to the client in SSR-rendered responses.
+- Avoid using user-controlled data in SSR without proper validation and encoding.
+- Use `next-helmet` to set security-related HTTP headers.
+
+## **3. Insecure Direct Object References (IDOR)**
+- Implement authorization checks at the API level (e.g., check `req.user` before processing requests).
+- Use role-based access control (RBAC) or attribute-based access control (ABAC).
+- Avoid sequential IDs in URLs and responses; use UUIDs or hashed identifiers.
+- Apply rate limiting (`express-rate-limit` or `next-rate-limit`) to prevent enumeration attacks.
+
+## **4. Cross-Site Request Forgery (CSRF)**
+- Implement CSRF tokens for state-changing operations (`csurf`).
+- Use `SameSite=Strict` or `SameSite=Lax` attributes for session cookies.
+- Prefer token-based authentication (JWT with `Authorization` headers) over session cookies.
+- Use CORS properly (restrict allowed origins to trusted domains).
+
+## **5. Dependency Management**
+- Regularly audit dependencies (`npm audit`, `yarn audit`, or `snyk test`).
+- Use `npm ci` or `yarn install --frozen-lockfile` to ensure dependency consistency.
+- Pin dependencies (`package-lock.json` or `yarn.lock`) to avoid supply-chain attacks.
+- Remove unused dependencies and avoid unnecessary third-party packages.
+
+## **6. Authentication and Authorization**
+- Use secure authentication methods (OAuth2, JWT, session-based authentication).
+- Store JWTs securely (prefer `httpOnly` cookies over local storage).
+- Implement multi-factor authentication (MFA) for admin and critical accounts.
+- Use rate limiting and lockout mechanisms to prevent brute-force attacks.
+- Log and monitor failed login attempts for anomaly detection.
+
+## **7. Sensitive Data Exposure**
+- Avoid storing sensitive data in local storage or exposing it in frontend JavaScript.
+- Use environment variables (`process.env`) to manage secrets.
+- Encrypt sensitive data at rest (AES-256 for databases) and in transit (TLS 1.2/1.3).
+- Implement proper access control for environment variables and configuration files.
+- Redact sensitive information in logs and API responses.
